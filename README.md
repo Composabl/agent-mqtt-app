@@ -47,7 +47,7 @@ To build the Docker image for the app, run:
 
 After building the Docker image, run the container:
 
-`docker run -p 8000:8000 --env-file .env -v $(pwd):/usr/src/app my-agent-runtime .`
+`docker run -p 8000:8000 --env-file .env -v $(pwd):/usr/src/app my-agent-runtime`
 
 This will start the Flask app on http://localhost:8000.
 
