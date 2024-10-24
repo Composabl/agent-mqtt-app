@@ -2,3 +2,4 @@ composabl
 flask[async]
 numpy
 Jinja2
+paho-mqtt

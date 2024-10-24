@@ -1,0 +1,10 @@
+FROM python:3.10-slim
+
+WORKDIR /usr/src/app
+
+COPY mqtt_producer.py .
+COPY producer_requirements.txt .
+
+RUN pip install --no-cache-dir -r producer_requirements.txt
+
+CMD ["python", "mqtt_producer.py"]

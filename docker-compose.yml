@@ -1,0 +1,42 @@
+services:
+  mqtt-broker:
+    container_name: composabl-mqtt-broker
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - agent-network
+
+  agent:
+    container_name: composabl-agent-mqtt
+    build: .
+    env_file:
+      - .env
+    environment:
+      - MQTT_BROKER=mqtt-broker
+    depends_on:
+      - mqtt-broker
+    networks:
+      - agent-network
+
+  producer:
+    container_name: composabl-mqtt-producer
+    build: 
+      context: .
+      dockerfile: Dockerfile.producer
+    environment:
+      - MQTT_BROKER=mqtt-broker
+    depends_on:
+      - mqtt-broker
+    networks:
+      - agent-network
+
+networks:
+  agent-network:
+    name: composabl-agent-network
+    driver: bridge

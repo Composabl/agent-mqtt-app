@@ -1,92 +1,94 @@
-# AI Agent Prediction App
-
-This is a simple web application built using Flask and Docker. The application allows users to input parameters via a form, sends these parameters to a backend agent inference system, and returns a prediction based on the input.
+# AI Agent MQTT Integration
+This application demonstrates real-time AI agent inference using MQTT messaging. It consists of a message producer that generates simulated data, an MQTT broker that handles message routing, and an AI agent that processes the data and returns predictions.
 
 ## Features
-- Flask-based backend API that handles agent inference.
-- Dockerized setup for easy deployment.
-- A simple frontend form for user input.
+- MQTT-based messaging system for real-time data processing
+- Dockerized setup with multiple services
+- Automated message generation for testing
+- Real-time agent predictions
+- Support for MQTT monitoring tools
 
 ## Project Structure
-
 ```bash
-├── Dockerfile                 # Dockerfile for building the app
-├── agent_inference.py         # Main Flask app that handles the AI agent inference
-├── templates/                 # HTML templates for the Flask app
-│   └── index.html
-├── static/                    # Static files (CSS, JS, images, etc.)
-│   ├── css/
-│   │   └── style.css          # Stylesheet for the app
-│   ├── js/
-│   │   └── script.js          # JavaScript logic for form handling
-│   └── images/
-│       └── logo-secondary.svg # Logo for the app
-├── .env                       # Environment file (for license key, etc.)
-├── requirements.txt           # Python dependencies
-└── README.md                  # This readme file
+├── Dockerfile                # Dockerfile for the agent service
+├── Dockerfile.producer       # Dockerfile for the message producer
+├── model/                    # Directory for the trained model
+│   └── agent.json            # Trained model file
+├── agent_inference.py        # Main agent service that processes MQTT messages
+├── mqtt_producer.py         # Script that generates test messages
+├── docker-compose.yml       # Docker compose configuration
+├── mosquitto/               # Mosquitto broker configuration
+│   ├── config/             
+│   │   └── mosquitto.conf   # MQTT broker configuration
+│   ├── data/               # Persistent storage for MQTT messages
+│   └── log/                # Broker logs
+├── .env                    # Environment file (for license key)
+├── requirements.txt        # Python dependencies for agent service
+├── producer_requirements.txt # Python dependencies for producer
+└── README.md              
+```
 
-Requirements
+## Requirements
+- Docker
+- Docker Compose
+- Python 3.10.x
+- MQTT Explorer (optional, for monitoring)
 
-	•	Docker
-	•	Python 3.10.x
-
-Getting Started
+## Getting Started
 
 1. Clone the Repository
+```bash
+git clone https://github.com/composabl/agent-mqtt-app.git
+cd agent-mqtt-app
+```
 
-`git clone https://github.com/composabl/agent-action-api-app.git`
-`cd agent-action-api-app`
+2. Set up Mosquitto Configuration
+Create the necessary directories and configuration:
+```bash
+mkdir -p mosquitto/config mosquitto/data mosquitto/log
+```
 
-2. Build the Docker Image
+Create `mosquitto/config/mosquitto.conf` with:
+```
+listener 1883
+allow_anonymous true
+persistence true
+persistence_location /mosquitto/data/
+log_dest file /mosquitto/log/mosquitto.log
+log_type all
+```
 
-To build the Docker image for the app, run:
+3. Start the Services
+```bash
+docker-compose up --build
+```
 
-`docker build -t agent-action-api-app .`
-
-3. Run the Application
-
-After building the Docker image, run the container:
-
-`docker run -p 8000:8000 --env-file .env -v $(pwd):/usr/src/app my-agent-runtime`
-
-This will start the Flask app on http://localhost:8000.
+This will start:
+- MQTT Broker (Mosquitto)
+- Agent Service
+- Message Producer
 
 4. Environment Variables
-
-Make sure to add your COMPOSABL_LICENSE key in the .env file:
-
+Make sure to add your COMPOSABL_LICENSE key in the `.env` file:
+```
 COMPOSABL_LICENSE=your_license_key_here
+```
 
-Accessing the App
+## Testing the Application
 
-After running the app, open your browser and go to:
+### Using MQTT Explorer
+1. Download and install MQTT Explorer from [mqtt-explorer.com](http://mqtt-explorer.com/)
+2. Connect to broker:
+   - Host: localhost
+   - Port: 1883
+3. Subscribe to topics:
+   - agent/observation (input data)
+   - agent/action (agent predictions)
 
-http://localhost:8000
-
-This will display a form where you can input values and get predictions from the AI agent.
-
-Form Input
-
-The form fields include:
-
-	•	T
-	•	Tc
-	•	Ca
-	•	Cref
-	•	Tref
-	•	Conc_Error
-	•	Eps_Yield
-	•	Cb_Prod
-
-Submit the form to receive a prediction in the “AI Agent Prediction” section.
-
-API Request
-
-You can also directly test the /predict API endpoint using curl or Postman:
-
-Example curl command:
-
-curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" -d '{
+### Manual Testing
+You can publish test messages using mosquitto_pub:
+```bash
+mosquitto_pub -h localhost -t "agent/observation" -m '{
   "observation": {
     "T": 311.0,
     "Tc": 292.0,
@@ -98,34 +100,99 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" -
     "Cb_Prod": 0.0
   }
 }'
+```
 
-Development Setup (Without Docker)
+Subscribe to responses:
+```bash
+mosquitto_sub -h localhost -t "agent/action" -v
+```
 
-If you prefer to run the app locally without Docker:
+## Message Format
 
-	1.	Install the required dependencies:
+### Input Message (agent/observation)
+```json
+{
+  "observation": {
+    "T": 311.0,
+    "Tc": 292.0,
+    "Ca": 8.56,
+    "Cref": 8.56,
+    "Tref": 311.0,
+    "Conc_Error": 0.0,
+    "Eps_Yield": 0.0,
+    "Cb_Prod": 0.0
+  }
+}
+```
 
-`pip install -r requirements.txt`
+### Output Message (agent/action)
+```json
+{
+  "action": [10.0]
+}
+```
 
+## Development Setup (Without Docker)
 
-	2.	Start the Flask app:
+If you prefer to run the services locally:
 
-`python agent_inference.py`
+1. Install Mosquitto broker:
+```bash
+# Ubuntu/Debian
+sudo apt-get install mosquitto
 
+# MacOS
+brew install mosquitto
+```
 
-The app will run on http://localhost:8000
+2. Install Python dependencies:
+```bash
+pip install -r requirements.txt
+pip install -r producer_requirements.txt
+```
 
-Notes
+3. Start the services:
+```bash
+# Terminal 1: Start Mosquitto
+mosquitto -c mosquitto/config/mosquitto.conf
 
-	•	Flask is running in debug mode for development purposes. Make sure to disable it in production by setting debug=False.
-	•	Static files (CSS, JS, and images) are served from the /static/ directory.
+# Terminal 2: Start the agent
+python agent_inference.py
 
-License
+# Terminal 3: Start the producer
+python mqtt_producer.py
+```
 
+## Monitoring and Debugging
+
+### View Logs
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f composabl-mqtt-broker
+docker-compose logs -f composabl-agent-mqtt
+docker-compose logs -f composabl-mqtt-producer
+```
+
+### Message Producer Options
+The message producer supports several command-line arguments:
+```bash
+# Custom interval (e.g., 2 seconds between messages)
+python mqtt_producer.py -i 2
+
+# Verbose logging
+python mqtt_producer.py -v
+```
+
+## Notes
+- The MQTT broker is configured for development use. Additional security measures should be implemented for production.
+- The message producer generates random data within realistic ranges for testing.
+- MQTT QoS level 2 is used for guaranteed message delivery.
+
+## License
 Make sure you have a valid license for the AI agent (COMPOSABL_LICENSE), as this is required for the app to work.
 
-Contributions
-
+## Contributions
 Feel free to contribute by submitting pull requests or opening issues!
-
-
