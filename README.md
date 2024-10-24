@@ -45,7 +45,7 @@ cd agent-mqtt-app
 2. Set up Mosquitto Configuration
 Create the necessary directories and configuration:
 ```bash
-mkdir -p mosquitto/config mosquitto/data mosquitto/log
+mkdir -p mosquitto/data mosquitto/log
 ```
 
 Create `mosquitto/config/mosquitto.conf` with:
@@ -58,7 +58,13 @@ log_dest file /mosquitto/log/mosquitto.log
 log_type all
 ```
 
-3. Start the Services
+3. Environment Variables
+Make sure to add your COMPOSABL_LICENSE key in the `.env` file:
+```
+COMPOSABL_LICENSE=your_license_key_here
+```
+
+4. Start the Services
 ```bash
 docker-compose up --build
 ```
@@ -67,12 +73,6 @@ This will start:
 - MQTT Broker (Mosquitto)
 - Agent Service
 - Message Producer
-
-4. Environment Variables
-Make sure to add your COMPOSABL_LICENSE key in the `.env` file:
-```
-COMPOSABL_LICENSE=your_license_key_here
-```
 
 ## Testing the Application
 
